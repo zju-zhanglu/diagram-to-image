@@ -1,0 +1,10 @@
+interface:
+  display_name: "Diagram to Image"
+  short_description: "Convert Markdown text diagrams to PNG"
+  default_prompt: "Use $diagram-to-image to convert Markdown ASCII or Unicode diagrams into draw.io PNG images."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "drawio"
+      description: "Create draw.io diagrams and export single-diagram PNG files."
