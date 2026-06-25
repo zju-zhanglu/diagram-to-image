@@ -37,57 +37,62 @@ claude mcp add drawio -- npx @next-ai-drawio/mcp-server@latest
 
 ## 安装
 
-全局安装 npm 包：
+### 一键安装（推荐）
 
 ```bash
-npm install -g @zju-zhanglu/diagram-to-image
+npx @zju-zhanglu/diagram-to-image
 ```
 
-然后选择要安装到哪些 Agent 运行时：
+交互式向导会引导你完成两个选择：
+
+1. **选择 Agent** — 安装到哪些 Agent 运行时（Codex、Claude Code 或全部）。
+2. **选择范围** — 安装到全局（所有项目可用）还是当前项目。
+
+### 非交互安装
 
 ```bash
-diagram-to-image install
+# 安装到所有 Agent，全局范围（默认）
+npx @zju-zhanglu/diagram-to-image install --all
+
+# 安装到指定 Agent
+npx @zju-zhanglu/diagram-to-image install --agent codex --agent claude-code
+
+# 安装到当前项目
+npx @zju-zhanglu/diagram-to-image install --all --scope project
 ```
 
-v1 支持的 Agent 目标：
+### 通过环境变量自动化
+
+```bash
+DIAGRAM_TO_IMAGE_AGENTS=codex,claude-code DIAGRAM_TO_IMAGE_SCOPE=global \
+  npm install -g @zju-zhanglu/diagram-to-image
+
+DIAGRAM_TO_IMAGE_AGENTS=all DIAGRAM_TO_IMAGE_SCOPE=project \
+  npm install @zju-zhanglu/diagram-to-image
+```
+
+### 支持的 Agent
 
 - `codex`
 - `claude-code`
 
-也可以使用非交互方式安装：
+### 安装范围
 
-```bash
-diagram-to-image install --agent codex
-diagram-to-image install --agent claude-code
-diagram-to-image install --all
-```
+| 范围 | Codex 路径 | Claude Code 路径 |
+|------|-----------|-----------------|
+| `global`（默认） | `$CODEX_HOME/skills/diagram-to-image` 或 `~/.codex/skills/diagram-to-image` | `$CLAUDE_HOME/skills/diagram-to-image` 或 `~/.claude/skills/diagram-to-image` |
+| `project` | `./.codex/skills/diagram-to-image` | `./.claude/skills/diagram-to-image` |
 
-如果希望在 `npm install -g` 时自动安装到指定 Agent，可设置 `DIAGRAM_TO_IMAGE_AGENTS`：
-
-```bash
-DIAGRAM_TO_IMAGE_AGENTS=codex,claude-code npm install -g @zju-zhanglu/diagram-to-image
-DIAGRAM_TO_IMAGE_AGENTS=all npm install -g @zju-zhanglu/diagram-to-image
-```
-
-如果没有设置 `DIAGRAM_TO_IMAGE_AGENTS`，npm install 不会复制文件到 Agent 目录，只安装 CLI 并提示：
-
-```text
-Run: diagram-to-image install
-```
-
-安装器会把 skill 复制到：
-
-- Codex：`$CODEX_HOME/skills/diagram-to-image` 或 `~/.codex/skills/diagram-to-image`
-- Claude Code：`$CLAUDE_HOME/skills/diagram-to-image` 或 `~/.claude/skills/diagram-to-image`
-
-查看支持的目标和安装状态：
+### 查看状态
 
 ```bash
 diagram-to-image list-agents
 diagram-to-image status
 ```
 
-也可以手动安装：把整个 `diagram-to-image/` 目录放到你的 Agent skill 目录，或放到已配置的 skill root 中。目录结构应保留为：
+### 手动安装
+
+把整个 `diagram-to-image/` 目录放到你的 Agent skill 目录，或放到已配置的 skill root 中。目录结构应保留为：
 
 ```text
 diagram-to-image/

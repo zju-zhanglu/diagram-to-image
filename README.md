@@ -37,57 +37,62 @@ You also need:
 
 ## Installation
 
-Install the package globally:
+### One-command install (recommended)
 
 ```bash
-npm install -g @zju-zhanglu/diagram-to-image
+npx @zju-zhanglu/diagram-to-image
 ```
 
-Then choose which Agent runtime should receive the skill:
+The interactive wizard walks you through two choices:
+
+1. **Agent selection** — which Agent runtimes to install to (Codex, Claude Code, or all).
+2. **Scope** — install globally (available in all projects) or to the current project only.
+
+### Non-interactive install
 
 ```bash
-diagram-to-image install
+# Install to all agents, global scope (default)
+npx @zju-zhanglu/diagram-to-image install --all
+
+# Install to specific agents
+npx @zju-zhanglu/diagram-to-image install --agent codex --agent claude-code
+
+# Install to current project only
+npx @zju-zhanglu/diagram-to-image install --all --scope project
 ```
 
-Version 1 supports these Agent targets:
+### Automation via environment variables
+
+```bash
+DIAGRAM_TO_IMAGE_AGENTS=codex,claude-code DIAGRAM_TO_IMAGE_SCOPE=global \
+  npm install -g @zju-zhanglu/diagram-to-image
+
+DIAGRAM_TO_IMAGE_AGENTS=all DIAGRAM_TO_IMAGE_SCOPE=project \
+  npm install @zju-zhanglu/diagram-to-image
+```
+
+### Supported agents
 
 - `codex`
 - `claude-code`
 
-You can also install non-interactively:
+### Install scopes
 
-```bash
-diagram-to-image install --agent codex
-diagram-to-image install --agent claude-code
-diagram-to-image install --all
-```
+| Scope | Codex path | Claude Code path |
+|-------|-------------|------------------|
+| `global` (default) | `$CODEX_HOME/skills/diagram-to-image` or `~/.codex/skills/diagram-to-image` | `$CLAUDE_HOME/skills/diagram-to-image` or `~/.claude/skills/diagram-to-image` |
+| `project` | `./.codex/skills/diagram-to-image` | `./.claude/skills/diagram-to-image` |
 
-For one-command automation during npm install, set `DIAGRAM_TO_IMAGE_AGENTS`:
-
-```bash
-DIAGRAM_TO_IMAGE_AGENTS=codex,claude-code npm install -g @zju-zhanglu/diagram-to-image
-DIAGRAM_TO_IMAGE_AGENTS=all npm install -g @zju-zhanglu/diagram-to-image
-```
-
-Without `DIAGRAM_TO_IMAGE_AGENTS`, npm install does not copy files into Agent directories; it only installs the CLI and prints:
-
-```text
-Run: diagram-to-image install
-```
-
-The installer copies the skill to:
-
-- Codex: `$CODEX_HOME/skills/diagram-to-image` or `~/.codex/skills/diagram-to-image`
-- Claude Code: `$CLAUDE_HOME/skills/diagram-to-image` or `~/.claude/skills/diagram-to-image`
-
-Check available targets and install status:
+### Check status
 
 ```bash
 diagram-to-image list-agents
 diagram-to-image status
 ```
 
-Manual installation is still possible. Place the whole `diagram-to-image/` directory in your Agent skills directory, or in any configured skill root. Keep this structure intact:
+### Manual installation
+
+Place the whole `diagram-to-image/` directory in your Agent skills directory or any configured skill root. Keep this structure intact:
 
 ```text
 diagram-to-image/
