@@ -90,6 +90,21 @@ diagram-to-image list-agents
 diagram-to-image status
 ```
 
+### 卸载
+
+```bash
+# 从所有 Agent、全局和项目范围卸载
+diagram-to-image uninstall
+
+# 从指定 Agent 卸载
+diagram-to-image uninstall --agent codex
+
+# 仅从项目范围卸载
+diagram-to-image uninstall --all --scope project
+```
+
+卸载会删除 Agent skills 路径下的 `diagram-to-image/` 目录。要卸载 npm 包本身，请使用 `npm uninstall -g @zju-zhanglu/diagram-to-image`。
+
 ### 手动安装
 
 把整个 `diagram-to-image/` 目录放到你的 Agent skill 目录，或放到已配置的 skill root 中。目录结构应保留为：

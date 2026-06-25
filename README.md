@@ -1,14 +1,14 @@
 # Diagram to Image
 
-[Chinese](README.zh.md)
+[中文](README.zh.md)
 
-`diagram-to-image` is an Agent Skill that converts ASCII or Unicode text diagrams in Markdown into faithful draw.io PNG images. It extracts candidate diagram blocks, classifies them, asks the user which diagrams to process, generates draw.io XML, runs local XML checks, and exports PNGs through the draw.io MCP server.
+`diagram-to-image` is an Agent Skill that converts ASCII or Unicode text diagrams in Markdown into faithful [draw.io](http://draw.io) PNG images. It extracts candidate diagram blocks, classifies them, asks the user which diagrams to process, generates [draw.io](http://draw.io) XML, runs local XML checks, and exports PNGs through the [draw.io](http://draw.io) MCP server.
 
-The final output must be a graphical reconstruction made of draw.io shapes, containers, labels, and connectors. Do not satisfy the task by screenshotting the original text diagram, rendering it as `<pre>`, or placing each source line into text cells.
+The final output must be a graphical reconstruction made of [draw.io](http://draw.io) shapes, containers, labels, and connectors. Do not satisfy the task by screenshotting the original text diagram, rendering it as `<pre>`, or placing each source line into text cells.
 
 ## Prerequisite
 
-Install and enable the draw.io MCP server from [DayuanJiang/next-ai-draw-io](https://github.com/DayuanJiang/next-ai-draw-io/) before using this skill. Without that MCP server, the skill can still extract diagram blocks and lint XML, but it cannot open a draw.io session or export PNG files.
+Install and enable the [draw.io](http://draw.io) MCP server from [DayuanJiang/next-ai-draw-io](https://github.com/DayuanJiang/next-ai-draw-io/) before using this skill. Without that MCP server, the skill can still extract diagram blocks and lint XML, but it cannot open a [draw.io](http://draw.io) session or export PNG files.
 
 MCP configuration example from the upstream README:
 
@@ -79,7 +79,7 @@ DIAGRAM_TO_IMAGE_AGENTS=all DIAGRAM_TO_IMAGE_SCOPE=project \
 ### Install scopes
 
 | Scope | Codex path | Claude Code path |
-|-------|-------------|------------------|
+| --- | --- | --- |
 | `global` (default) | `$CODEX_HOME/skills/diagram-to-image` or `~/.codex/skills/diagram-to-image` | `$CLAUDE_HOME/skills/diagram-to-image` or `~/.claude/skills/diagram-to-image` |
 | `project` | `./.codex/skills/diagram-to-image` | `./.claude/skills/diagram-to-image` |
 
@@ -89,6 +89,21 @@ DIAGRAM_TO_IMAGE_AGENTS=all DIAGRAM_TO_IMAGE_SCOPE=project \
 diagram-to-image list-agents
 diagram-to-image status
 ```
+
+### Uninstall
+
+```bash
+# Remove from all agents, both global and project
+diagram-to-image uninstall
+
+# Remove from specific agents
+diagram-to-image uninstall --agent codex
+
+# Remove only from project scope
+diagram-to-image uninstall --all --scope project
+```
+
+Uninstall removes the `diagram-to-image/` directory from the agent skills path. It does NOT uninstall the npm package — use `npm uninstall -g @zju-zhanglu/diagram-to-image` for that.
 
 ### Manual installation
 
@@ -132,10 +147,10 @@ Use $diagram-to-image to convert /absolute/path/to/doc.md and skip manual review
 1. Extract candidate diagram blocks from Markdown.
 2. Classify each candidate as `architecture`, `flowchart`, or `sequence`.
 3. Show the candidates and wait for the user to choose which diagrams to process.
-4. Generate one-page draw.io XML for each selected diagram.
+4. Generate one-page [draw.io](http://draw.io) XML for each selected diagram.
 5. Review XML with `references/xml-review-checklist.md`.
 6. Run `scripts/lint_drawio_xml.py`.
-7. Open the diagram through the draw.io MCP server, wait for manual approval or an explicit bypass, then export PNG.
+7. Open the diagram through the [draw.io](http://draw.io) MCP server, wait for manual approval or an explicit bypass, then export PNG.
 8. Run automated visual review when available.
 9. Return PNG paths and a short verification summary.
 
@@ -179,7 +194,7 @@ python3 scripts/extract_markdown_diagrams.py /absolute/path/to/doc.md \
   --out /absolute/path/to/diagram-images/diagram-blocks.json
 ```
 
-Lint draw.io XML:
+Lint [draw.io](http://draw.io) XML:
 
 ```bash
 python3 scripts/lint_drawio_xml.py /absolute/path/to/diagram-001.xml

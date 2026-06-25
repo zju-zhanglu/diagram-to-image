@@ -8,6 +8,7 @@ const {
   SKILL_RESOURCE_PATHS,
   copySkillResources,
   parseAgentsEnv,
+  uninstallSkillFromAgents,
 } = require("../lib/install-skill");
 
 test("resource list includes only skill-owned resources", () => {
@@ -60,4 +61,49 @@ test("copySkillResources copies skill resources without npm-only files", () => {
   assert.equal(fs.existsSync(path.join(targetRoot, "bin", "diagram-to-image.js")), false);
   assert.equal(fs.existsSync(path.join(targetRoot, "lib", "agent-registry.js")), false);
   assert.equal(fs.existsSync(path.join(targetRoot, "package.json")), false);
+});
+
+test("uninstallSkillFromAgents removes installed skill directories", () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "diagram-to-image-uninstall-"));
+  const globalPath = path.join(tempRoot, ".claude", "skills", "diagram-to-image");
+  const projectPath = path.join(tempRoot, "project", ".claude", "skills", "diagram-to-image");
+
+  fs.mkdirSync(globalPath, { recursive: true });
+  fs.writeFileSync(path.join(globalPath, "SKILL.md"), "skill");
+  fs.mkdirSync(projectPath, { recursive: true });
+  fs.writeFileSync(path.join(projectPath, "SKILL.md"), "skill");
+
+  const results = uninstallSkillFromAgents({
+    agentIds: ["claude-code"],
+    scopes: ["global", "project"],
+    context: {
+      homedir: () => tempRoot,
+      cwd: () => path.join(tempRoot, "project"),
+      env: {},
+    },
+  });
+
+  assert.equal(results.length, 2);
+  assert.equal(results[0].removed, true);
+  assert.equal(results[0].scope, "global");
+  assert.equal(fs.existsSync(globalPath), false);
+  assert.equal(results[1].removed, true);
+  assert.equal(results[1].scope, "project");
+  assert.equal(fs.existsSync(projectPath), false);
+});
+
+test("uninstallSkillFromAgents reports not-installed as skipped", () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "diagram-to-image-uninstall-skip-"));
+
+  const results = uninstallSkillFromAgents({
+    agentIds: ["codex"],
+    scopes: ["global"],
+    context: {
+      homedir: () => tempRoot,
+      env: {},
+    },
+  });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].removed, false);
 });
