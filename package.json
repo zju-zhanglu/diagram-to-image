@@ -1,6 +1,6 @@
 {
   "name": "@zju-zhanglu/diagram-to-image",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Agent skill for converting Markdown ASCII or Unicode diagrams into draw.io PNG images.",
   "license": "MIT",
   "bin": {
@@ -21,6 +21,7 @@
   "scripts": {
     "test": "python3 -m unittest discover -s scripts -p 'test_*.py' && node --test test/*.test.js",
     "postinstall": "node lib/postinstall.js",
+    "preuninstall": "node lib/preuninstall.js",
     "prepublishOnly": "npm test && npm pack --dry-run"
   },
   "engines": {
