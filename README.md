@@ -4,8 +4,6 @@
 
 `diagram-to-image` is an Agent Skill that converts ASCII or Unicode text diagrams in Markdown into faithful [draw.io](http://draw.io) PNG images. It extracts candidate diagram blocks, classifies them, asks the user which diagrams to process, generates [draw.io](http://draw.io) XML, runs local XML checks, and exports PNGs through the [draw.io](http://draw.io) MCP server.
 
-The final output must be a graphical reconstruction made of [draw.io](http://draw.io) shapes, containers, labels, and connectors. Do not satisfy the task by screenshotting the original text diagram, rendering it as `<pre>`, or placing each source line into text cells.
-
 ## Prerequisite
 
 Install and enable the [draw.io](http://draw.io) MCP server from [DayuanJiang/next-ai-draw-io](https://github.com/DayuanJiang/next-ai-draw-io/) before using this skill. Without that MCP server, the skill can still extract diagram blocks and lint XML, but it cannot open a [draw.io](http://draw.io) session or export PNG files.
@@ -83,63 +81,33 @@ DIAGRAM_TO_IMAGE_AGENTS=all DIAGRAM_TO_IMAGE_SCOPE=project \
 | `global` (default) | `$CODEX_HOME/skills/diagram-to-image` or `~/.codex/skills/diagram-to-image` | `$CLAUDE_HOME/skills/diagram-to-image` or `~/.claude/skills/diagram-to-image` |
 | `project` | `./.codex/skills/diagram-to-image` | `./.claude/skills/diagram-to-image` |
 
-### Check status
-
-```bash
-diagram-to-image list-agents
-diagram-to-image status
-```
-
 ### Uninstall
 
 ```bash
 # Remove from all agents, both global and project
-diagram-to-image uninstall
+npx @zju-zhanglu/diagram-to-image uninstall
 
 # Remove from specific agents
-diagram-to-image uninstall --agent codex
+npx @zju-zhanglu/diagram-to-image uninstall --agent codex
 
 # Remove only from project scope
-diagram-to-image uninstall --all --scope project
+npx @zju-zhanglu/diagram-to-image uninstall --all --scope project
 ```
 
 Uninstall removes the `diagram-to-image/` directory from the agent skills path. It does NOT uninstall the npm package — use `npm uninstall -g @zju-zhanglu/diagram-to-image` for that.
-
-### Manual installation
-
-Place the whole `diagram-to-image/` directory in your Agent skills directory or any configured skill root. Keep this structure intact:
-
-```text
-diagram-to-image/
-├── SKILL.md
-├── README.md
-├── README.zh.md
-├── agents/
-├── references/
-└── scripts/
-```
-
-Make sure the MCP tool is named `drawio`. `agents/openai.yaml` declares the same dependency:
-
-```yaml
-dependencies:
-  tools:
-    - type: "mcp"
-      value: "drawio"
-```
 
 ## Usage
 
 In a skill-aware Agent, ask:
 
 ```text
-Use $diagram-to-image to convert /absolute/path/to/doc.md into draw.io PNG images.
+/diagram-to-image convert @/absolute/path/to/doc.md
 ```
 
 To skip manual review, the original request must say so explicitly:
 
 ```text
-Use $diagram-to-image to convert /absolute/path/to/doc.md and skip manual review.
+/diagram-to-image convert @/absolute/path/to/doc.md and skip manual review.
 ```
 
 ## Workflow
@@ -162,49 +130,6 @@ INPUT_DIR/
     ├── diagram-blocks.json
     ├── diagram-001.xml
     └── diagram-001.png
-```
-
-## Local Scripts
-
-When installed with npm, the global CLI delegates to the bundled Python scripts:
-
-```bash
-diagram-to-image extract /absolute/path/to/doc.md \
-  --out /absolute/path/to/diagram-images/diagram-blocks.json
-
-diagram-to-image lint /absolute/path/to/diagram-001.xml
-
-diagram-to-image select-vision-model --runtime codex --current-model "$MODEL"
-```
-
-From a source checkout or installed skill directory, you can also run the Python scripts directly.
-
-Extract Markdown diagram blocks:
-
-```bash
-python3 scripts/extract_markdown_diagrams.py /absolute/path/to/doc.md \
-  --out /absolute/path/to/diagram-images/diagram-blocks.json
-```
-
-Include 4-space indented code blocks:
-
-```bash
-python3 scripts/extract_markdown_diagrams.py /absolute/path/to/doc.md \
-  --include-indented \
-  --out /absolute/path/to/diagram-images/diagram-blocks.json
-```
-
-Lint [draw.io](http://draw.io) XML:
-
-```bash
-python3 scripts/lint_drawio_xml.py /absolute/path/to/diagram-001.xml
-```
-
-Select a model for visual review:
-
-```bash
-python3 scripts/select_vision_model.py --runtime codex --current-model "$MODEL"
-python3 scripts/select_vision_model.py --runtime claude --current-model "$MODEL"
 ```
 
 ## Quality Bar

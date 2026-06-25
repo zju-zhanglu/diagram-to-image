@@ -2,13 +2,11 @@
 
 [English](README.md)
 
-`diagram-to-image` 是一个 Agent Skill，用于把 Markdown 中的 ASCII 或 Unicode 文本图转换成忠实的 draw.io PNG 图片。它会提取候选图块、分类、让用户选择要处理的图、生成 draw.io XML、执行本地 XML 检查，并通过 draw.io MCP 导出 PNG。
-
-最终输出必须是由 draw.io 形状、容器、标签和连接线重建的图形。不要把原始文本图截图、渲染成 `<pre>`，或逐行摆成文本单元格。
+`diagram-to-image` 是一个 Agent Skill，用于把 Markdown 中的 ASCII 或 Unicode 文本图转换成忠实的 [draw.io](http://draw.io) PNG 图片。它会提取候选图块、分类、让用户选择要处理的图、生成 [draw.io](http://draw.io) XML、执行本地 XML 检查，并通过 [draw.io](http://draw.io) MCP 导出 PNG。
 
 ## 前置依赖
 
-必须先安装并启用 [DayuanJiang/next-ai-draw-io](https://github.com/DayuanJiang/next-ai-draw-io/) 提供的 draw.io MCP server。没有这个 MCP server，skill 仍可提取图块和检查 XML，但不能打开 draw.io 会话或导出 PNG。
+必须先安装并启用 [DayuanJiang/next-ai-draw-io](https://github.com/DayuanJiang/next-ai-draw-io/) 提供的 [draw.io](http://draw.io) MCP server。没有这个 MCP server，skill 仍可提取图块和检查 XML，但不能打开 [draw.io](http://draw.io) 会话或导出 PNG。
 
 上游 README 给出的 MCP 配置示例：
 
@@ -79,73 +77,37 @@ DIAGRAM_TO_IMAGE_AGENTS=all DIAGRAM_TO_IMAGE_SCOPE=project \
 ### 安装范围
 
 | 范围 | Codex 路径 | Claude Code 路径 |
-|------|-----------|-----------------|
+| --- | --- | --- |
 | `global`（默认） | `$CODEX_HOME/skills/diagram-to-image` 或 `~/.codex/skills/diagram-to-image` | `$CLAUDE_HOME/skills/diagram-to-image` 或 `~/.claude/skills/diagram-to-image` |
 | `project` | `./.codex/skills/diagram-to-image` | `./.claude/skills/diagram-to-image` |
-
-### 查看状态
-
-```bash
-diagram-to-image list-agents
-diagram-to-image status
-```
 
 ### 卸载
 
 ```bash
 # 从所有 Agent、全局和项目范围卸载
-diagram-to-image uninstall
+npx @zju-zhanglu/diagram-to-image install
 
 # 从指定 Agent 卸载
-diagram-to-image uninstall --agent codex
+npx @zju-zhanglu/diagram-to-image install --agent codex
 
 # 仅从项目范围卸载
-diagram-to-image uninstall --all --scope project
+npx @zju-zhanglu/diagram-to-image install --all --scope project
 ```
 
 卸载会删除 Agent skills 路径下的 `diagram-to-image/` 目录。要卸载 npm 包本身，请使用 `npm uninstall -g @zju-zhanglu/diagram-to-image`。
-
-### 手动安装
-
-把整个 `diagram-to-image/` 目录放到你的 Agent skill 目录，或放到已配置的 skill root 中。目录结构应保留为：
-
-```text
-diagram-to-image/
-├── SKILL.md
-├── README.md
-├── README.zh.md
-├── agents/
-├── references/
-└── scripts/
-```
-
-确认 MCP 工具名为 `drawio`。`agents/openai.yaml` 也声明了该 MCP 依赖：
-
-```yaml
-dependencies:
-  tools:
-    - type: "mcp"
-      value: "drawio"
-```
 
 ## 使用方式
 
 在支持 skill 的 Agent 中调用：
 
 ```text
-Use $diagram-to-image to convert /absolute/path/to/doc.md into draw.io PNG images.
+/diagram-to-image 转换 @/absolute/path/to/doc.md
 ```
 
 如果希望跳过人工审核，必须在原始请求中明确说明，例如：
 
 ```text
-Use $diagram-to-image to convert /absolute/path/to/doc.md and skip manual review.
-```
-
-或：
-
-```text
-使用 $diagram-to-image 转换 /absolute/path/to/doc.md，并跳过人工审核。
+/diagram-to-image 转换 @/absolute/path/to/doc.md ，并跳过人工审核。
 ```
 
 ## 工作流
@@ -153,10 +115,10 @@ Use $diagram-to-image to convert /absolute/path/to/doc.md and skip manual review
 1. 从 Markdown 中提取候选图块。
 2. 将候选图分类为 `architecture`、`flowchart` 或 `sequence`。
 3. 展示候选图列表，并等待用户选择要处理的图。
-4. 为每个选中的图生成单页 draw.io XML。
+4. 为每个选中的图生成单页 [draw.io](http://draw.io) XML。
 5. 按 `references/xml-review-checklist.md` 检查 XML。
 6. 运行 `scripts/lint_drawio_xml.py`。
-7. 通过 draw.io MCP 打开图、等待人工审核或显式跳过审核，然后导出 PNG。
+7. 通过 [draw.io](http://draw.io) MCP 打开图、等待人工审核或显式跳过审核，然后导出 PNG。
 8. 可用时运行自动视觉复核。
 9. 返回 PNG 路径和验证摘要。
 
@@ -168,49 +130,6 @@ INPUT_DIR/
     ├── diagram-blocks.json
     ├── diagram-001.xml
     └── diagram-001.png
-```
-
-## 本地脚本
-
-通过 npm 安装后，全局 CLI 会调用包内 Python 脚本：
-
-```bash
-diagram-to-image extract /absolute/path/to/doc.md \
-  --out /absolute/path/to/diagram-images/diagram-blocks.json
-
-diagram-to-image lint /absolute/path/to/diagram-001.xml
-
-diagram-to-image select-vision-model --runtime codex --current-model "$MODEL"
-```
-
-在源码 checkout 或已安装的 skill 目录中，也可以直接运行 Python 脚本。
-
-提取 Markdown 图块：
-
-```bash
-python3 scripts/extract_markdown_diagrams.py /absolute/path/to/doc.md \
-  --out /absolute/path/to/diagram-images/diagram-blocks.json
-```
-
-如需扫描 4 空格缩进代码块：
-
-```bash
-python3 scripts/extract_markdown_diagrams.py /absolute/path/to/doc.md \
-  --include-indented \
-  --out /absolute/path/to/diagram-images/diagram-blocks.json
-```
-
-检查 draw.io XML：
-
-```bash
-python3 scripts/lint_drawio_xml.py /absolute/path/to/diagram-001.xml
-```
-
-选择可用于视觉复核的模型：
-
-```bash
-python3 scripts/select_vision_model.py --runtime codex --current-model "$MODEL"
-python3 scripts/select_vision_model.py --runtime claude --current-model "$MODEL"
 ```
 
 ## 质量要求
