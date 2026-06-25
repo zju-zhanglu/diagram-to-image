@@ -1,6 +1,6 @@
 {
   "name": "@zju-zhanglu/diagram-to-image",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Agent skill for converting Markdown ASCII or Unicode diagrams into draw.io PNG images.",
   "license": "MIT",
   "bin": {
