@@ -31,8 +31,8 @@ class SelectVisionModelTests(unittest.TestCase):
             probe_path.name = ".probe.png"
             probe_path.parent = Path.cwd()
             probe_path.unlink = mock.Mock()
-            make_png.return_value = probe_path
-            run.return_value = selector.CommandResult(returncode=0, stdout="VISION_OK", stderr="")
+            make_png.return_value = (probe_path, 42, 36)
+            run.return_value = selector.CommandResult(returncode=0, stdout="PROBE_W_42_H_36", stderr="")
 
             self.assertTrue(selector.probe_claude_image_support("vision-model", 3))
 
@@ -50,13 +50,49 @@ class SelectVisionModelTests(unittest.TestCase):
             probe_path.name = ".probe.png"
             probe_path.parent = Path.cwd()
             probe_path.unlink = mock.Mock()
-            make_png.return_value = probe_path
+            make_png.return_value = (probe_path, 42, 36)
             run.return_value = selector.CommandResult(returncode=1, stdout="", stderr="API Error: bad request")
 
             result = selector.probe_claude_image_support("vision-model", 3)
 
         self.assertFalse(result)
         self.assertEqual(result.error, "api_error")
+
+    def test_claude_probe_treats_dashscope_invalid_parameter_as_api_error(self) -> None:
+        with mock.patch("select_vision_model.make_probe_png") as make_png, mock.patch(
+            "select_vision_model.run_command"
+        ) as run:
+            probe_path = mock.Mock()
+            probe_path.name = ".probe.png"
+            probe_path.parent = Path.cwd()
+            probe_path.unlink = mock.Mock()
+            make_png.return_value = (probe_path, 42, 36)
+            run.return_value = selector.CommandResult(
+                returncode=1,
+                stdout="",
+                stderr='data:{"code":"InvalidParameter","message":"Unexpected item type in content"}',
+            )
+
+            result = selector.probe_claude_image_support("qwen-model", 3)
+
+        self.assertFalse(result)
+        self.assertEqual(result.error, "api_error")
+
+    def test_claude_probe_rejects_dimension_mismatch(self) -> None:
+        with mock.patch("select_vision_model.make_probe_png") as make_png, mock.patch(
+            "select_vision_model.run_command"
+        ) as run:
+            probe_path = mock.Mock()
+            probe_path.name = ".probe.png"
+            probe_path.parent = Path.cwd()
+            probe_path.unlink = mock.Mock()
+            make_png.return_value = (probe_path, 42, 36)
+            run.return_value = selector.CommandResult(returncode=0, stdout="PROBE_W_16_H_16", stderr="")
+
+            result = selector.probe_claude_image_support("guessing-model", 3)
+
+        self.assertFalse(result)
+        self.assertIn("dimension_mismatch", result.error)
 
     def test_claude_probe_catches_timeout_and_cli_errors(self) -> None:
         with mock.patch("select_vision_model.make_probe_png") as make_png, mock.patch(
@@ -66,7 +102,7 @@ class SelectVisionModelTests(unittest.TestCase):
             probe_path.name = ".probe.png"
             probe_path.parent = Path.cwd()
             probe_path.unlink = mock.Mock()
-            make_png.return_value = probe_path
+            make_png.return_value = (probe_path, 42, 36)
             run.side_effect = selector.subprocess.TimeoutExpired(["claude"], 3)
 
             timeout_result = selector.probe_claude_image_support("vision-model", 3)
@@ -80,7 +116,7 @@ class SelectVisionModelTests(unittest.TestCase):
         self.assertTrue(cli_result.error.startswith("probe_cli_error:"))
 
     def test_probe_png_satisfies_common_minimum_image_dimensions(self) -> None:
-        path = selector.make_probe_png()
+        path, expected_width, expected_height = selector.make_probe_png()
         try:
             data = path.read_bytes()
         finally:
@@ -90,6 +126,8 @@ class SelectVisionModelTests(unittest.TestCase):
         height = int.from_bytes(data[20:24], "big")
         self.assertGreater(width, 10)
         self.assertGreater(height, 10)
+        self.assertEqual(width, expected_width)
+        self.assertEqual(height, expected_height)
 
     def test_codex_prefers_current_model_when_it_supports_image(self) -> None:
         def runner(command: list[str], timeout: int) -> selector.CommandResult:

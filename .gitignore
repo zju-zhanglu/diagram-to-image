@@ -1,2 +1,13 @@
+### AI Agent ###
+CLAUDE.local.md
+/.claude/settings.local.json
+/.claude/worktrees/
+/.claude/commands/opsx/
+/.claude/skills/openspec-*/
+/.qoder/commands/opsx/
+/.codex/skills/openspec-*/
+/.qoder/skills/openspec-*/
+.planning/HANDOFF.json
+
 scripts/__pycache__/
 .codegraph/

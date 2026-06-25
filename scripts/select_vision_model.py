@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import re
 import struct
 import subprocess
@@ -199,11 +200,14 @@ def claude_candidate_models(
     return current, candidates
 
 
-def make_probe_png() -> Path:
-    png = make_png_bytes(width=16, height=16)
+def make_probe_png() -> tuple[Path, int, int]:
+    """Generate a probe PNG with random dimensions so the model must actually see the image to report them."""
+    width = random.randint(32, 60)
+    height = random.randint(24, 48)
+    png = make_png_bytes(width=width, height=height)
     path = Path.cwd() / f".diagram-vision-probe-{uuid.uuid4().hex}.png"
     path.write_bytes(png)
-    return path
+    return path, width, height
 
 
 def make_png_bytes(width: int, height: int) -> bytes:
@@ -216,12 +220,15 @@ def make_png_bytes(width: int, height: int) -> bytes:
 
 
 def probe_claude_image_support(model: str, timeout: int = 60) -> ProbeResult:
-    png_path = make_probe_png()
+    png_path, expected_width, expected_height = make_probe_png()
     image_ref = png_path.name if png_path.parent == Path.cwd() else str(png_path)
     prompt = (
         f"Inspect this local PNG image: @{image_ref}. "
-        "If you can see the image, reply exactly VISION_OK. "
-        "If you cannot inspect it, reply exactly VISION_UNSUPPORTED."
+        "Look at the actual image pixels and report its dimensions. "
+        "Reply with exactly one line in this format: PROBE_W_<number>_H_<number> "
+        "where the numbers are the image width and height in pixels you see. "
+        "If you cannot inspect the image at all, reply exactly VISION_UNSUPPORTED. "
+        "Do not guess."
     )
     command = [
         "claude",
@@ -247,13 +254,21 @@ def probe_claude_image_support(model: str, timeout: int = 60) -> ProbeResult:
         except OSError:
             pass
     output = f"{result.stdout}\n{result.stderr}"
-    if "API Error" in output:
+    # Detect API errors — covers both Anthropic and DashScope-compatible proxy errors
+    if "API Error" in output or "InvalidParameter" in output or "Unexpected item type" in output:
         return ProbeResult(False, "api_error")
     if result.returncode != 0:
         return ProbeResult(False, f"probe_exit_{result.returncode}")
-    if "VISION_OK" in output and "VISION_UNSUPPORTED" not in output:
-        return ProbeResult(True)
-    return ProbeResult(False, "vision_unsupported_or_unparseable_response")
+    # Content-based verification: the model must report the correct dimensions
+    match = re.search(r"PROBE_W_(\d+)_H_(\d+)", output)
+    if match:
+        reported_w, reported_h = int(match.group(1)), int(match.group(2))
+        if reported_w == expected_width and reported_h == expected_height:
+            return ProbeResult(True)
+        return ProbeResult(False, f"dimension_mismatch: expected {expected_width}x{expected_height}, got {reported_w}x{reported_h}")
+    if "VISION_UNSUPPORTED" in output:
+        return ProbeResult(False, "vision_unsupported")
+    return ProbeResult(False, "unparseable_response")
 
 
 def normalize_probe_result(model: str, raw_result: ProbeResult | bool) -> ProbeResult:
