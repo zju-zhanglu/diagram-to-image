@@ -1,13 +1,13 @@
 ---
 name: diagram-to-image
-description: Convert Markdown documents containing ASCII or Unicode text diagrams into faithful draw.io PNG images. Use when the user provides a Markdown file or Markdown text and asks to extract architecture diagrams, flowcharts, or sequence diagrams from fenced or indented text blocks, generate draw.io XML through the drawio MCP, export PNGs, and visually validate structural fidelity, container hierarchy, readable text, and compact canvas layout.
+description: Convert Markdown documents containing ASCII or Unicode text diagrams into faithful draw.io PNG images. Use when the user provides a Markdown file or Markdown text and asks to extract architecture diagrams, flowcharts, or sequence diagrams from fenced or indented text blocks, generate draw.io XML through the drawio MCP, review and lint XML, gate export through browser-based human approval, and export PNGs.
 ---
 
 # Diagram To Image
 
 ## Overview
 
-Convert Markdown text diagrams into one PNG per selected diagram by extracting candidate code blocks, classifying them, asking the user which diagrams to process, generating single-diagram draw.io XML, reviewing the XML, exporting with the drawio MCP, and visually checking the PNG. Prioritize structural fidelity, correct containment, readable labels, and a tight canvas.
+Convert Markdown text diagrams into one PNG per selected diagram by extracting candidate code blocks, classifying them, asking the user which diagrams to process, generating single-diagram draw.io XML, reviewing and linting the XML, gating export through draw.io browser human approval, and exporting with the drawio MCP. Prioritize structural fidelity, correct containment, readable labels, and a tight canvas.
 
 The final PNG must be a graphical reconstruction made of draw.io shapes, containers, labels, and connectors. Do not satisfy the task by rendering the original ASCII/Unicode block as a screenshot, `<pre>` block, line-by-line text cells, or any other raw text facsimile.
 
@@ -25,39 +25,9 @@ INPUT_DIR/
 
 Use `diagram-images/` unless the user explicitly requests another folder. For pasted Markdown without a source file, first save or treat the Markdown in a user-appropriate working document location, then place `diagram-images/` beside that input document. Include absolute output paths in the final summary.
 
-## Vision Model Gate
-
-Only the automated visual recognition review requires multimodal image understanding. Do not switch models for extraction, classification, XML generation, XML review, linting, draw.io browser review, human approval, or PNG export.
-
-Before visual recognition review, choose an image-capable model for the current runtime:
-
-```bash
-python3 scripts/select_vision_model.py --runtime codex --current-model "$MODEL"
-python3 scripts/select_vision_model.py --runtime claude --current-model "$MODEL"
-```
-
-Use `--runtime codex` for Codex and `--runtime claude` for Claude Code. No other runtime is supported by this skill.
-
-If the selector returns `can_run_visual_review=true`, use `selected_model` for automated visual review and then return to the original model for subsequent work. If it returns `can_run_visual_review=false`, skip automated visual review, record `visual_status=SKIPPED_NO_VISION_MODEL`, and continue to the final summary. Do not run a substitute structural validator.
-
-If model selection or visual review hits `API Error`, timeout, non-zero command exit, CLI exception, or an unparseable response, catch the failure, record the short failure reason, mark the visual review unavailable or failed for that diagram, and continue the workflow. Do not let probe failures interrupt XML review, linting, human approval, PNG export, or the final summary.
-
-For Codex, the selector discovers image-capable models from:
-
-```bash
-codex debug models | jq -r '
-  .models[]
-  | select((.input_modalities // []) | index("image"))
-  | [.slug, (.input_modalities | join(",")), .display_name]
-  | @tsv
-'
-```
-
-For Claude Code, the selector parses the configured model candidates and runs one lightweight image probe per candidate. A candidate is usable only when its image probe succeeds. Probe failures mean only that the tested model is not usable for this visual review step.
-
 ## Workflow State Tracking
 
-Before starting Step 1, create a visible task list for the Required Workflow. Include Steps 1-9 and initialize every item as `PENDING`. Use only these status values:
+Before starting Step 1, create a visible task list for the Required Workflow. Include Steps 1-8 and initialize every item as `PENDING`. Use only these status values:
 
 - `PENDING`
 - `IN_PROGRESS`
@@ -68,9 +38,9 @@ Before starting Step 1, create a visible task list for the Required Workflow. In
 
 Update the task list before starting a step, after finishing a step, and before moving to the next step. Do not claim completion while any selected diagram has a required item left as `PENDING`, `IN_PROGRESS`, or `BLOCKED`.
 
-After Step 3, expand Steps 4-8 into per-diagram task items for every selected block id, such as `Step 4 / block-2: generate XML`, `Step 5 / block-2: XML review`, `Step 6 / block-2: lint`, `Step 7 / block-2: approval and export`, and `Step 8 / block-2: visual review`. Track each selected diagram separately through retries.
+After Step 3, expand Steps 4-7 into per-diagram task items for every selected block id, such as `Step 4 / block-2: generate XML`, `Step 5 / block-2: XML review`, `Step 6 / block-2: lint`, and `Step 7 / block-2: approval and export`. Track each selected diagram separately through retries.
 
-Mark skipped work only with a concrete reason. Valid examples include `SKIPPED: user selected no diagrams`, `SKIPPED: subagent tools unavailable; completed sequentially`, or `SKIPPED: visual_status=SKIPPED_NO_VISION_MODEL`. Mark a diagram `UNRESOLVED: reason` only after the allowed retries are exhausted or the user explicitly stops that diagram.
+Mark skipped work only with a concrete reason. Valid examples include `SKIPPED: user selected no diagrams` or `SKIPPED: subagent tools unavailable; completed sequentially`. Mark a diagram `UNRESOLVED: reason` only after the allowed retries are exhausted or the user explicitly stops that diagram.
 
 Before the final summary, audit the task list. Every Required Workflow item and every selected diagram's per-diagram item must be terminal: `DONE`, `SKIPPED: reason`, or `UNRESOLVED: reason`.
 
@@ -123,24 +93,9 @@ Before the final summary, audit the task list. Every Required Workflow item and 
      - **Reject**: the user rejects the diagram. Do not export it. Return to XML generation for that same diagram, then repeat XML review, lint, browser display, and human approval for that diagram.
    - After approval or auto-pass, call `export_diagram` to write exactly one PNG from the current drawio browser state. The PNG output path must be under `OUTPUT_DIR` beside the input document, using the same stem as the XML, such as `diagram-001.png`.
    - Do not start the next diagram's drawio create/review/export cycle until the current diagram is either exported after user approval/auto-pass or reported as unresolved after 3 rejected generation attempts.
+   - Retry at most 3 generation attempts per diagram, then report the unresolved failure clearly.
 
-8. Run visual validation only after the user-approved or auto-passed PNG is exported:
-
-   **Pre-flight check:**
-   - Record the original/current model before this step.
-   - Run `scripts/select_vision_model.py` for the current runtime.
-   - If the output contains `probe_errors`, preserve those short failure reasons for the final summary.
-   - If `can_run_visual_review=false`, mark this diagram `SKIPPED: visual_status=SKIPPED_NO_VISION_MODEL` and continue. Do not run any fallback validator.
-
-   **Automated visual review** (when `can_run_visual_review=true`):
-   - Run the visual review with `selected_model`, provide the PNG and the original source block, and then return to the original model for subsequent work.
-   - Use `references/visual-review-checklist.md` when a detailed rubric is useful.
-   - If the visual review call fails with `API Error`, timeout, non-zero exit, CLI exception, or an unparseable response, record `visual_status=FAIL` with the short failure reason and continue to the final summary.
-   - If automated visual review finds a blocking issue after human approval or auto-pass, report the discrepancy to the user and ask whether to keep the browser-approved/auto-passed PNG or regenerate that diagram.
-
-   **Retry policy:** Retry at most 3 generation attempts per diagram, then report the unresolved failure clearly.
-
-9. Return the PNG paths and a short verification summary listing the input document path, `OUTPUT_DIR`, each selected source block id, category, attempts, XML review status, lint status, human approval outcome, visual status, original model, visual review model, model selection reason, and any probe or visual review failure reason. Also note any extracted block ids the user did not select.
+8. Return the PNG paths and a short verification summary listing the input document path, `OUTPUT_DIR`, each selected source block id, category, attempts, XML review status, lint status, and human approval outcome. Also note any extracted block ids the user did not select.
 
 If subagent tools are unavailable in the current session, continue sequentially instead of pretending delegation happened, and state that limitation in the final summary.
 
@@ -297,20 +252,6 @@ XML path: XML_PATH
 Apply references/xml-review-checklist.md. Report PASS or FAIL with blocking fixes. Do not export PNGs.
 ```
 
-Visual review prompt:
-
-```text
-Use $diagram-to-image to visually review one PNG exported from a Markdown text diagram.
-
-Category: CATEGORY
-Original/current model: ORIGINAL_MODEL
-Visual review model: SELECTED_MODEL
-Original source block: SOURCE
-PNG path: PNG_PATH
-
-Apply `references/visual-review-checklist.md`. Check structural fidelity, container hierarchy, text readability, connector routing, rounded rectangles, and compact canvas. Report PASS or FAIL with concrete fixes, and include the visual review model name in the result.
-```
-
 ## Completion Checklist
 
 Before finishing, verify:
@@ -318,7 +259,7 @@ Before finishing, verify:
 - The workflow task list was created before Step 1 and updated through the full run.
 - Every Required Workflow step has terminal status `DONE`, `SKIPPED: reason`, or `UNRESOLVED: reason`.
 - Every skipped item includes a concrete reason.
-- Steps 4-8 are tracked separately for each user-selected source block id.
+- Steps 4-7 are tracked separately for each user-selected source block id.
 - Every user-selected diagram has one PNG output, or a clearly documented unresolved status after retries.
 - The final summary notes extracted diagrams that were not selected and therefore intentionally skipped.
 - Every PNG came from a separate drawio MCP create/browser/export cycle with only one diagram XML.
@@ -329,7 +270,5 @@ Before finishing, verify:
 - Every XML passed XML review or was fixed after review.
 - Every XML passed `scripts/lint_drawio_xml.py` with no errors.
 - Every architecture XML's source container tree, visible containment, and `mxCell parent` hierarchy agree. Do not rely on comments or self-check prose to claim this.
-- Every PNG has visual status `PASS`, `FAIL`, or `SKIPPED_NO_VISION_MODEL`; failures after 3 attempts are documented clearly.
-- The final summary records the original model, selected visual review model, selection reason, any probe or visual review failure reason, and whether visual review returned to the original model afterward.
 - Architecture diagrams have documented container-tree analysis, layout summary, and self-check from `references/architecture-layout-algorithm.md`.
 - The final summary maps Markdown block ids to PNG paths.

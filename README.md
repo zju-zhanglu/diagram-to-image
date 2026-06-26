@@ -29,9 +29,8 @@ claude mcp add drawio -- npx @next-ai-drawio/mcp-server@latest
 
 You also need:
 
-- Python 3 for local extraction, linting, and vision-model selection scripts.
+- Python 3 for local extraction and linting scripts.
 - An Agent runtime such as Codex or Claude Code.
-- An image-capable model if you want automated visual review. If none is available, the workflow records that visual review was skipped and continues.
 
 ## Installation
 
@@ -119,8 +118,7 @@ To skip manual review, the original request must say so explicitly:
 5. Review XML with `references/xml-review-checklist.md`.
 6. Run `scripts/lint_drawio_xml.py`.
 7. Open the diagram through the [draw.io](http://draw.io) MCP server, wait for manual approval or an explicit bypass, then export PNG.
-8. Run automated visual review when available.
-9. Return PNG paths and a short verification summary.
+8. Return PNG paths and a short verification summary.
 
 By default, outputs are written beside the input Markdown file:
 
@@ -147,7 +145,6 @@ See the detailed rules in:
 - `SKILL.md`
 - `references/architecture-layout-algorithm.md`
 - `references/xml-review-checklist.md`
-- `references/visual-review-checklist.md`
 
 ## License
 

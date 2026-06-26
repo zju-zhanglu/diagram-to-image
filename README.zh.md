@@ -29,9 +29,8 @@ claude mcp add drawio -- npx @next-ai-drawio/mcp-server@latest
 
 还需要：
 
-- Python 3，用于本地提取、lint 和视觉模型选择脚本。
+- Python 3，用于本地提取和 lint 脚本。
 - 可用的 Agent 运行时，例如 Codex 或 Claude Code。
-- 若要执行自动视觉复核，需要当前运行时中存在可处理图片输入的模型；没有时流程会跳过该复核步骤并继续收尾。
 
 ## 安装
 
@@ -119,8 +118,7 @@ npx @zju-zhanglu/diagram-to-image install --all --scope project
 5. 按 `references/xml-review-checklist.md` 检查 XML。
 6. 运行 `scripts/lint_drawio_xml.py`。
 7. 通过 [draw.io](http://draw.io) MCP 打开图、等待人工审核或显式跳过审核，然后导出 PNG。
-8. 可用时运行自动视觉复核。
-9. 返回 PNG 路径和验证摘要。
+8. 返回 PNG 路径和验证摘要。
 
 默认输出目录位于输入 Markdown 文件旁边：
 
@@ -147,7 +145,6 @@ INPUT_DIR/
 - `SKILL.md`
 - `references/architecture-layout-algorithm.md`
 - `references/xml-review-checklist.md`
-- `references/visual-review-checklist.md`
 
 ## License
 
