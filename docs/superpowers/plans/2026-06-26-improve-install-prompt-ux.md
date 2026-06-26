@@ -2,6 +2,7 @@
 change: improve-install-prompt-ux
 design-doc: docs/superpowers/specs/2026-06-26-improve-install-prompt-ux-design.md
 base-ref: a5a275359b0f175b6431eae9401049a88c703bd3
+archived-with: 2026-06-26-improve-install-prompt-ux
 ---
 
 # Improve Install Prompt UX — Implementation Plan
@@ -17,6 +18,7 @@ base-ref: a5a275359b0f175b6431eae9401049a88c703bd3
 | `package.json` | Declare runtime dependency | Add `@inquirer/prompts` to dependencies |
 | `lib/cli.js` | All prompt logic | Rename legacy, add inquirer, add wrappers, update exports |
 
+archived-with: 2026-06-26-improve-install-prompt-ux
 ---
 
 ## Task 1: Add dependency
@@ -25,6 +27,7 @@ base-ref: a5a275359b0f175b6431eae9401049a88c703bd3
 - [x] 1.2 Run `npm install`
 - [x] 1.3 Verify: `node -e "require('@inquirer/prompts')"` exits 0
 
+archived-with: 2026-06-26-improve-install-prompt-ux
 ---
 
 ## Task 2: Refactor lib/cli.js
@@ -94,6 +97,7 @@ async function promptForScope(opts) {
 - [x] 2.7 Update `module.exports` to export wrapper + legacy functions
 - [x] 2.8 Verify syntax: `node -c lib/cli.js`
 
+archived-with: 2026-06-26-improve-install-prompt-ux
 ---
 
 ## Task 3: Verify

@@ -1,0 +1,14 @@
+{
+  "change": "improve-install-prompt-ux",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "5746f834199ac9610a26c9a47d41bc4395fee644b15d48637cfd5c558ec3e685",
+  "files": [
+    { "path": "openspec/changes/improve-install-prompt-ux/proposal.md", "sha256": "be50ab2911ff893b2caece77bc80da59f9de0068c8113db97124b2622cf8dc46" },
+    { "path": "openspec/changes/improve-install-prompt-ux/design.md", "sha256": "015fa7b4d0e2c2c92ce94ef5c2bff18a4de1a95f007d63ca22e8a92ecb2d783f" },
+    { "path": "openspec/changes/improve-install-prompt-ux/tasks.md", "sha256": "c9142eb42c863de2b5e384512d3d4a99725c05c10f6ddc46d2e739240b17503e" },
+    { "path": "openspec/changes/improve-install-prompt-ux/specs/installer-interactive-prompt/spec.md", "sha256": "9a3c25d384e4558789ab25846cc9aab5fc2a35abaf2c894cc60b3fe45599128f" }
+  ]
+}

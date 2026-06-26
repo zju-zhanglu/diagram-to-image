@@ -11,3 +11,4 @@ CLAUDE.local.md
 
 scripts/__pycache__/
 .codegraph/
+node_modules/
